@@ -16,6 +16,7 @@ from datetime import date, timedelta
 import random
 from flask import Flask
 import argparse
+import re
 
 app = Flask(__name__)
 
@@ -25,109 +26,14 @@ db = client.Users
 coll = db.Credentials
 
 divisor = 10
+global userPts #ilagay nalang sa DB
+userPts = 0
 
-def index():
-    name = coll.find_one()
-    userPts = 'foo'#focus_level.userPts
-
-    lvl = 'foo' #focus_level.lvl
-    session = "foo"
-    img = open('public/neighbor.jpg', 'rb').read() 
-    def redeemPopup():
-        popup('Rewards', [
-            put_text('Choose your redeemable reward'),
-            put_row([
-                put_button('10% off', onclick=createQR10, color='success'),
-                put_button('15% off', onclick=createQR15, color='success'), 
-                put_button('20% off', onclick=createQR20, color='success'),  
-            ]),
-                
-            put_buttons(['close'], onclick=lambda _: close_popup())
-            ])
-    
-    with use_scope():
-        put_text('Hi there!').style('font-size:50px').style('font-weight: bold')
-
-    
-    put_tabs([
-        {'title': 'About','content':[put_text('FocusT uses eye tracking AI technology to monitor you while you study and trains you to improve your focus!'),  put_text('This web app is developed by a group of five third-year college students taking Bachelor of Science in Information Technology in West Visayas State University.')]},
-        {'title': 'Dashboard','content':[put_tabs([
-        
-        {'title': 'Start Session', 'content': [ put_text('Press the button to start session'), put_button('Start', onclick=lambda: go_app('detect', new_window=False),  color='success') ]},
-        {'title': 'User Level', 'content': [ put_text('Level', lvl).style('font-weight: bold'),put_text('XP to next level: ', lvl ), put_text('Your points: ', userPts ).style('font-weight: bold'),]},
-        {'title': 'Recent Sessions', 'content':[put_collapse('Session 1',[session]),put_collapse('Session 1',[session]),put_collapse('Session 1',[session])]}
-    ])]},
-        
-        {'title': 'Rewards','content':[ put_text('You can claim rewards in exchange for points here'),   put_tabs([
-        {'title':'Neighbor Coffee', 'content':[put_text('Neighbor coffee').style('font-weight: bold'), put_row([put_image(img, height='150px'), put_text('NEIGHBOR COFFEE started as a roadside cafe in our Cagbang neighborhood, January of 2021. we offer manual brews and handcrafted espressos using specialty coffee beans that are both sourced locally and globally. we are a community of slow living and coffee-loving people who are conscious about the traceability, sustainability, and quality of the coffee they consume. we exist to promote traceable, sustainable, and quality coffee so that everyone in the coffee supply chain is empowered and given the value they deserve.')], size='200px'),put_button('Redeem Rewards', onclick=redeemPopup) ]},
-        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]},
-        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]}
-    ])]},
-        {'title': 'Manual', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=True), color='success')},
-        {'title': 'Logout', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
-        
-    ])    
-    #diri gaprint qr code
-    def createQR10():
-        if focus_level.userPts >=100:
-            focus_level.userPts-100
-            s = date.today() + timedelta(days=2) 
-            expiration = "This 10% off coupon is valid until: " + str(s)
-            url = pyqrcode.create(expiration)
-            url.png('coupon-10.png', scale = 6)
-            content = open('coupon-10.png', 'rb').read()
-            popup('Download your Coupon',[
-                            
-            put_file('10% off coupon.png', content, 'Click me')  
-                        ])
-            toast("Great! coupon created")
-        else:
-            toast('insufficient points', color='red')
-        
-
-
-
-
-    def createQR15():
-        if focus_level.userPts >=150:
-            focus_level.userPts-150
-            s = date.today() + timedelta(days=2) 
-            expiration = "This 15% off coupon is valid until: " + str(s)
-            url = pyqrcode.create(expiration)
-            url.png('coupon-15.png', scale = 6)
-            content = open('coupon-15.png', 'rb').read()
-            popup('Download your Coupon',[
-                        
-            put_file('15% off coupon.png', content, 'Click me')  
-                    ])
-            toast("Great! coupon created")  
-        else:
-            toast('insufficient points',color='red')
-        
-
-    def createQR20():
-        if focus_level.userPts >=200:
-            focus_level.userPts-200
-            s = date.today() + timedelta(days=2) 
-            expiration = "This 20% off coupon is valid until: " + str(s)
-            url = pyqrcode.create(expiration)
-            url.png('coupon-20.png', scale = 6)
-            content = open('coupon-20.png', 'rb').read()
-            popup('Download your Coupon',[
-                        
-            put_file('20% off coupon.png', content, 'Click me')  
-                    ])
-            toast("Great! coupon created")   
-        else:
-            toast('insufficient points',color='red')
-
-   
-    
-""" def login():
+def login():
     info = input_group("Login",[
         input('Email', name='email', required=False),
         input('Password', name='password', type=PASSWORD, required=False),
-    ], cancelable=True)
+    ],)
 
     #para ma access mo ang variables
 
@@ -139,7 +45,7 @@ def index():
     if user_found:  # user exists
         if password == user_found['password']:
             toast('Login success!')
-            go_app('dashboard', new_window=False)
+            go_app('index', new_window=False)
         else:
             toast('Wrong password')
             index()
@@ -148,6 +54,7 @@ def index():
         toast("user not found")
         index()
     put_buttons(['Register'], [lambda: go_app('register', new_window=False)]) # Use  
+    
 
 def register():
     regex = '^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$'  
@@ -191,9 +98,109 @@ def register():
 
     coll.insert_one(collection)
     toast("Registration Success")
-    index() """
+    index() 
+
+def index():
+    name = 'a' #coll.find_one()
+    pts = '0' #focus_level.userPts
+
+    lvl = 'foo' #focus_level.lvl
+    session = "foo"
+    img = open('public/neighbor.jpg', 'rb').read() 
+    def redeemPopup():
+        popup('Rewards', [
+            put_text('Choose your redeemable reward'),
+            put_row([
+                put_button('10% off', onclick=createQR10, color='success'),
+                put_button('15% off', onclick=createQR15, color='success'), 
+                put_button('20% off', onclick=createQR20, color='success'),  
+            ]),
+                
+            put_buttons(['close'], onclick=lambda _: close_popup())
+            ])
+    
+    with use_scope():
+        put_text('Hi there!').style('font-size:50px').style('font-weight: bold')
 
     
+    put_tabs([
+        {'title': 'About','content':[put_text('FocusT uses eye tracking AI technology to monitor you while you study and trains you to improve your focus!'),  put_text('This web app is developed by a group of five third-year college students taking Bachelor of Science in Information Technology in West Visayas State University.')]},
+        {'title': 'Dashboard','content':[put_tabs([
+        
+        {'title': 'Start Session', 'content': [ put_text('Press the button to start session'), put_button('Start', onclick=lambda: go_app('detect', new_window=False),  color='success') ]},
+        {'title': 'User Level', 'content': [ put_text('Level', lvl).style('font-weight: bold'),put_text('XP to next level: ', lvl ), put_text('Your points: ', pts ).style('font-weight: bold'),]},
+        {'title': 'Recent Sessions', 'content':[put_collapse('Session 1',[session]),put_collapse('Session 1',[session]),put_collapse('Session 1',[session])]}
+    ])]},
+        
+        {'title': 'Rewards','content':[ put_text('You can claim rewards in exchange for points here'),   put_tabs([
+        {'title':'Neighbor Coffee', 'content':[put_text('Neighbor coffee').style('font-weight: bold'), put_row([put_image(img, height='150px'), put_text('NEIGHBOR COFFEE started as a roadside cafe in our Cagbang neighborhood, January of 2021. we offer manual brews and handcrafted espressos using specialty coffee beans that are both sourced locally and globally. we are a community of slow living and coffee-loving people who are conscious about the traceability, sustainability, and quality of the coffee they consume. we exist to promote traceable, sustainable, and quality coffee so that everyone in the coffee supply chain is empowered and given the value they deserve.')], size='200px'),put_button('Redeem Rewards', onclick=redeemPopup) ]},
+        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]},
+        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]}
+    ])]},
+        {'title': 'Manual', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=True), color='success')},
+        {'title': 'Logout', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
+        
+    ])    
+    #diri gaprint qr code
+    def createQR10():
+        if  userPts >=100:
+            userPts-100
+            s = date.today() + timedelta(days=2) 
+            expiration = "This 10% off coupon is valid until: " + str(s)
+            url = pyqrcode.create(expiration)
+            url.png('coupon-10.png', scale = 6)
+            content = open('coupon-10.png', 'rb').read()
+            popup('Download your Coupon',[
+                            
+            put_file('10% off coupon.png', content, 'Click me')  
+                        ])
+            toast("Great! coupon created")
+        else:
+            toast('insufficient points', color='red')
+        
+
+
+
+
+    def createQR15():
+        if  userPts >=150:
+            userPts-150
+            s = date.today() + timedelta(days=2) 
+            expiration = "This 15% off coupon is valid until: " + str(s)
+            url = pyqrcode.create(expiration)
+            url.png('coupon-15.png', scale = 6)
+            content = open('coupon-15.png', 'rb').read()
+            popup('Download your Coupon',[
+                        
+            put_file('15% off coupon.png', content, 'Click me')  
+                    ])
+            toast("Great! coupon created")  
+        else:
+            toast('insufficient points',color='red')
+        
+
+    def createQR20():
+        if userPts >=200:
+            userPts-200
+            s = date.today() + timedelta(days=2) 
+            expiration = "This 20% off coupon is valid until: " + str(s)
+            url = pyqrcode.create(expiration)
+            url.png('coupon-20.png', scale = 6)
+            content = open('coupon-20.png', 'rb').read()
+            popup('Download your Coupon',[
+                        
+            put_file('20% off coupon.png', content, 'Click me')  
+                    ])
+            toast("Great! coupon created")   
+        else:
+            toast('insufficient points',color='red')
+
+#################### 
+    
+
+
+
+ ############   
 
 def logout():
     toast("you have logged out")
@@ -201,11 +208,12 @@ def logout():
 def header():
     content = open('public/mainlogo.png', 'rb').read()
     put_image(content, height='60px')
-
+    
+###################################
 def detect():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
-    duration = datetime.timedelta(seconds=5)
+    duration = datetime.timedelta(seconds=10)
     endTime = datetime.datetime.now() + duration
     endTime_toStr = endTime.strftime('%H:%M')
   
@@ -289,6 +297,7 @@ def detect():
                 if counter > 10:
                     counter = 0
             if ratioAverage <= 32:
+                time.sleep(2)
                 drowsiness += 1
                 print("drowsiness level: ", drowsiness)
                 with use_scope('drowsy'):
@@ -303,55 +312,55 @@ def detect():
           playsound('./public/alarm.wav')
           blinkRate = blinkCounter/ divisor
           Fscore_i = blinkRate + drowsiness + distraction
-          FsFinal = (float(Fscore_i/3)) * 100
+          FsFinal = (float(Fscore_i/3))
           toast("session end", color="danger")
           put_text("Session A focus score: ", FsFinal).style('text-align:center').style('font-weight:bold')
           focus_score = {
                 'focus score A': FsFinal
                 }
           coll.insert_one(focus_score)
+          time.sleep(5)
           go_app('stroop', new_window=False)
           break
 
-    
+###################################   
 
 def focus_level():
-    startingXP = 0
-    FsFinal_A = 85
-    FsFinal_B = 90
     
-    FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+    
+    
+    
+    FL =  ((detectB.FsFinal_B - detect.FsFinal_A)/detect.FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
     global levelResult
     levelResult = round(FL) #gin round up 
-   
-        
-        
-    #print(levelResult)
-    
     
     def level():  #feel ko need ni sa database ibutang
-    # exp = levelResult
+        currentXP = 0
         XPtoLvlUp = 100 #muni baseline
         global lvl
         lvl=0
-        global userPts
-        userPts=0
         
-        currentXP = levelResult + startingXP
+        
+        
+        currentXP = levelResult + currentXP
         
         if currentXP >= XPtoLvlUp:
             toast('Yay! You levelled up!')
             lvl+=1
             userPts +=200
+            coll.insert_one(userPts) # GINBUTANG KO NALANG 
             detect.duration + datetime.timedelta(minutes=5) # add duration 
             print(lvl)
             print("your points",userPts)
-        #else:
-            #print('need more XP')
-            #print(currentXP)
-    
-# wala pa increase time na function/ line of code
+            #else:
+                #print('need more XP')
+                #print(currentXP)
+        
+        
+    #print(levelResult)  
+#########################################
 
+####################################
 def stroop():
     with use_scope('stroop', clear=True):
         def remove():
@@ -438,7 +447,7 @@ def stroop():
 def detectB():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
-    duration = datetime.timedelta(seconds=5)
+    duration = datetime.timedelta(seconds=10)
     endTime = datetime.datetime.now() + duration
     endTime_toStr = endTime.strftime('%H:%M')
   
@@ -522,6 +531,7 @@ def detectB():
                 if counter > 10:
                     counter = 0
             if ratioAverage <= 32:
+                time.sleep(2)
                 drowsiness += 1
                 print("drowsiness level: ", drowsiness)
                 with use_scope('drowsy'):
@@ -536,13 +546,14 @@ def detectB():
           playsound('./public/alarm.wav')
           blinkRate = blinkCounter/ divisor
           Fscore_i = blinkRate + drowsiness + distraction
-          FsFinal = (float(Fscore_i/3)) * 100
+          FsFinal = (float(Fscore_i/3)) 
           toast("session end", color="danger")
-          put_text("Session A focus score: ", FsFinal).style('text-align:center').style('font-weight:bold')
+          put_text("Session B focus score: ", FsFinal).style('text-align:center').style('font-weight:bold')
           focus_score = {
                 'focus score A': FsFinal
                 }
           coll.insert_one(focus_score)
+          time.sleep(5)
           go_app('index', new_window=False)
           break
 
@@ -563,5 +574,5 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', type=int, default=3000)
     args = parser.parse_args()
 
-start_server([index, detect, detectB, stroop, manual], port=args.port)
+start_server([login, index, detect, detectB, stroop, manual], port=args.port)
 
