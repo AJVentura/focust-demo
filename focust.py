@@ -28,7 +28,7 @@ coll = db.Credentials
 divisor = 10
 global userPts #ilagay nalang sa DB
 userPts = 0
-
+#=============LOGIN==================#
 def login():
     info = input_group("Login",[
         input('Email', name='email', required=False),
@@ -55,7 +55,7 @@ def login():
         index()
     put_buttons(['Register'], [lambda: go_app('register', new_window=False)]) # Use  
     
-
+#============REGISTER=============#
 def register():
     regex = '^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$'  
     def checkValid(x):
@@ -100,6 +100,8 @@ def register():
     toast("Registration Success")
     index() 
 
+#=============INDEX===============#
+
 def index():
     name = 'a' #coll.find_one()
     pts = '0' #focus_level.userPts
@@ -141,7 +143,7 @@ def index():
         {'title': 'Logout', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
         
     ])    
-    #diri gaprint qr code
+#=====diri gaprint qr code===========
     def createQR10():
         if  userPts >=100:
             userPts-100
@@ -157,10 +159,6 @@ def index():
             toast("Great! coupon created")
         else:
             toast('insufficient points', color='red')
-        
-
-
-
 
     def createQR15():
         if  userPts >=150:
@@ -195,12 +193,12 @@ def index():
         else:
             toast('insufficient points',color='red')
 
-#################### 
+
     
 
 
 
- ############   
+#=======LOGOUT==============
 
 def logout():
     toast("you have logged out")
@@ -209,7 +207,7 @@ def header():
     content = open('public/mainlogo.png', 'rb').read()
     put_image(content, height='60px')
     
-###################################
+#============DETECT.PY==================
 def detect():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
@@ -323,12 +321,9 @@ def detect():
           go_app('stroop', new_window=False)
           break
 
-###################################   
+#========FOCUS LEVEL================= 
 
 def focus_level():
-    
-    
-    
     
     FL =  ((detectB.FsFinal_B - detect.FsFinal_A)/detect.FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
     global levelResult
@@ -348,7 +343,7 @@ def focus_level():
             toast('Yay! You levelled up!')
             lvl+=1
             userPts +=200
-            coll.insert_one(userPts) # GINBUTANG KO NALANG 
+            coll.insert_one(userPts) # Gchange to update, indi insert
             detect.duration + datetime.timedelta(minutes=5) # add duration 
             print(lvl)
             print("your points",userPts)
@@ -360,7 +355,7 @@ def focus_level():
     #print(levelResult)  
 #########################################
 
-####################################
+#======STROOP=============
 def stroop():
     with use_scope('stroop', clear=True):
         def remove():
@@ -443,7 +438,7 @@ def stroop():
             put_button("blue", onclick=blue), None])
         stroop()
         countdown()
-        
+#========DETECT_B.PY==============      
 def detectB():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
@@ -556,7 +551,8 @@ def detectB():
           time.sleep(5)
           go_app('index', new_window=False)
           break
-
+      
+#=========MANUAL====================
 def manual():
     put_text('User Manual\n\n').style('font-size:30px').style('font-weight:bold').style('text-align:center')
     put_text('✅ Open Materials of Choice \n Open your learning materials that you will use for studying such as ppt, word documents, pdf, ebooks etc.'),
