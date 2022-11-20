@@ -139,7 +139,7 @@ def index():
         {'title':'Coming Soon', 'content':[put_text('Coming Soon')]},
         {'title':'Coming Soon', 'content':[put_text('Coming Soon')]}
     ])]},
-        {'title': 'Manual', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=True), color='success')},
+        {'title': 'Manual', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=False), color='success')},
         {'title': 'Logout', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
         
     ])    
@@ -211,7 +211,8 @@ def header():
 def detect():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
-    duration = datetime.timedelta(seconds=10)
+    global duration
+    duration = datetime.timedelta(seconds=5)
     endTime = datetime.datetime.now() + duration
     endTime_toStr = endTime.strftime('%H:%M')
   
@@ -295,7 +296,7 @@ def detect():
                 if counter > 10:
                     counter = 0
             if ratioAverage <= 32:
-                time.sleep(2)
+                #time.sleep(1)
                 drowsiness += 1
                 print("drowsiness level: ", drowsiness)
                 with use_scope('drowsy'):
@@ -310,49 +311,19 @@ def detect():
           playsound('./public/alarm.wav')
           blinkRate = blinkCounter/ divisor
           Fscore_i = blinkRate + drowsiness + distraction
-          FsFinal = (float(Fscore_i/3))
+          global FsFinal_A
+          FsFinal_A = (float(Fscore_i/3))
           toast("session end", color="danger")
-          put_text("Session A focus score: ", FsFinal).style('text-align:center').style('font-weight:bold')
-          focus_score = {
-                'focus score A': FsFinal
+          put_text("Session A focus score: ", FsFinal_A).style('text-align:center').style('font-weight:bold')
+          focus_scoreA = {
+                'focus score A': FsFinal_A
                 }
-          coll.insert_one(focus_score)
+          coll.insert_one(focus_scoreA)
           time.sleep(5)
           go_app('stroop', new_window=False)
           break
 
-#========FOCUS LEVEL================= 
 
-def focus_level():
-    
-    FL =  ((detectB.FsFinal_B - detect.FsFinal_A)/detect.FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
-    global levelResult
-    levelResult = round(FL) #gin round up 
-    
-    def level():  #feel ko need ni sa database ibutang
-        currentXP = 0
-        XPtoLvlUp = 100 #muni baseline
-        global lvl
-        lvl=0
-        
-        
-        
-        currentXP = levelResult + currentXP
-        
-        if currentXP >= XPtoLvlUp:
-            toast('Yay! You levelled up!')
-            lvl+=1
-            userPts +=200
-            coll.insert_one(userPts) # Gchange to update, indi insert
-            detect.duration + datetime.timedelta(minutes=5) # add duration 
-            print(lvl)
-            print("your points",userPts)
-            #else:
-                #print('need more XP')
-                #print(currentXP)
-        
-        
-    #print(levelResult)  
 #########################################
 
 #======STROOP=============
@@ -438,7 +409,10 @@ def stroop():
             put_button("blue", onclick=blue), None])
         stroop()
         countdown()
-#========DETECT_B.PY==============      
+#========DETECT_B.PY============== 
+#def back():
+    #go_app('index', new_window=False)  
+       
 def detectB():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
@@ -526,7 +500,7 @@ def detectB():
                 if counter > 10:
                     counter = 0
             if ratioAverage <= 32:
-                time.sleep(2)
+                #time.sleep(1)
                 drowsiness += 1
                 print("drowsiness level: ", drowsiness)
                 with use_scope('drowsy'):
@@ -538,19 +512,101 @@ def detectB():
         #focus score ni
         if datetime.datetime.now() >= endTime:
           
-          playsound('./public/alarm.wav')
-          blinkRate = blinkCounter/ divisor
-          Fscore_i = blinkRate + drowsiness + distraction
-          FsFinal = (float(Fscore_i/3)) 
-          toast("session end", color="danger")
-          put_text("Session B focus score: ", FsFinal).style('text-align:center').style('font-weight:bold')
-          focus_score = {
-                'focus score A': FsFinal
-                }
-          coll.insert_one(focus_score)
-          time.sleep(5)
-          go_app('index', new_window=False)
-          break
+            playsound('./public/alarm.wav')
+            blinkRate = blinkCounter/ divisor
+            Fscore_i = blinkRate + drowsiness + distraction
+            global FsFinal_B
+            FsFinal_B = (float(Fscore_i/3)) 
+            toast("session end", color="danger")
+            put_text("Session B focus score: ", FsFinal_B).style('text-align:center').style('font-weight:bold')
+            focus_scoreB = {
+                    'focus score B': FsFinal_B
+                    }
+            coll.insert_one(focus_scoreB)
+        #====== focus level na part =====    
+            global levelResult  
+            if FsFinal_A > FsFinal_B:
+                FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+            
+                levelResult =abs(float(round(FL,2)))
+            else:
+                FL =  ((FsFinal_A- FsFinal_B)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+            
+                levelResult =float(round(FL,2))
+            
+           
+            global currentXP
+            currentXP = 0
+            #XPtoLvlUp = 100 #muni baseline
+            global lvl
+            lvl=1
+            currentXP = levelResult + currentXP
+            if currentXP >= 100:
+                toast('Yay! You levelled up!')
+                lvl +=1
+                userPts +=200
+                #coll.insert_one(userPts) # Gchange to update, indi insert
+                #duration + datetime.timedelta(minutes=5) # add duration 
+                #print(lvl)
+                #print("your points",userPts)
+                #else:
+                    #print('need more XP')
+                    #print(currentXP)
+                
+            
+            put_text('your focus level is:', levelResult)
+            put_text('current level:', lvl)
+            put_text('Xp:', currentXP )
+            time.sleep(10)
+            go_app('index', new_window=False)        
+            break
+      
+#========FOCUS LEVEL================= 
+
+'''def focus_level():
+    global levelResult
+   
+    
+    if FsFinal_A > FsFinal_B:
+        FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+        
+        levelResult =float(round(FL,2))
+    else:
+        FL =  ((FsFinal_A- FsFinal_B)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+        
+        levelResult =float(round(FL,2))
+        
+    
+   
+    global currentXP
+    currentXP = 0
+    XPtoLvlUp = 100 #muni baseline
+    global lvl
+    lvl=0
+    
+    
+    
+    currentXP = levelResult + currentXP
+    
+    if currentXP >= XPtoLvlUp:
+        toast('Yay! You levelled up!')
+        lvl +=1
+        userPts +=200
+        #coll.insert_one(userPts) # Gchange to update, indi insert
+        duration + datetime.timedelta(minutes=5) # add duration 
+        #print(lvl)
+        #print("your points",userPts)
+        #else:
+            #print('need more XP')
+            #print(currentXP)
+        
+   
+    put_text('your focus level is:', levelResult)
+    put_text('current level:', lvl)
+    put_text('Xp:', currentXP )
+    
+        
+    #print(levelResult)  '''
       
 #=========MANUAL====================
 def manual():
@@ -570,5 +626,5 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', type=int, default=3000)
     args = parser.parse_args()
 
-start_server([login, index, detect, detectB, stroop, manual], port=args.port)
+start_server([login, index, detect, detectB, stroop, manual,], port=args.port)
 
