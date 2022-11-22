@@ -26,8 +26,7 @@ db = client.Users
 coll = db.Credentials
 
 divisor = 10
-global userPts #ilagay nalang sa DB
-userPts = 0
+
 #=============LOGIN==================#
 def login():
     info = input_group("Login",[
@@ -103,6 +102,7 @@ def register():
 #=============INDEX===============#
 
 def index():
+    header()
     name = 'a' #coll.find_one()
     pts = '0' #focus_level.userPts
 
@@ -126,21 +126,21 @@ def index():
 
     
     put_tabs([
-        {'title': 'About','content':[put_text('FocusT uses eye tracking AI technology to monitor you while you study and trains you to improve your focus!'),  put_text('This web app is developed by a group of five third-year college students taking Bachelor of Science in Information Technology in West Visayas State University.')]},
-        {'title': 'Dashboard','content':[put_tabs([
+        {'title': 'About👁️','content':[put_text('FocusT uses eye tracking AI technology to monitor you while you study and trains you to improve your focus!'),  put_text('This web app is developed by a group of five third-year college students taking Bachelor of Science in Information Technology in West Visayas State University.')]},
+        {'title': 'Dashboard📋','content':[put_tabs([
         
         {'title': 'Start Session', 'content': [ put_text('Press the button to start session'), put_button('Start', onclick=lambda: go_app('detect', new_window=False),  color='success') ]},
         {'title': 'User Level', 'content': [ put_text('Level', lvl).style('font-weight: bold'),put_text('XP to next level: ', lvl ), put_text('Your points: ', pts ).style('font-weight: bold'),]},
         {'title': 'Recent Sessions', 'content':[put_collapse('Session 1',[session]),put_collapse('Session 1',[session]),put_collapse('Session 1',[session])]}
     ])]},
         
-        {'title': 'Rewards','content':[ put_text('You can claim rewards in exchange for points here'),   put_tabs([
-        {'title':'Neighbor Coffee', 'content':[put_text('Neighbor coffee').style('font-weight: bold'), put_row([put_image(img, height='150px'), put_text('NEIGHBOR COFFEE started as a roadside cafe in our Cagbang neighborhood, January of 2021. we offer manual brews and handcrafted espressos using specialty coffee beans that are both sourced locally and globally. we are a community of slow living and coffee-loving people who are conscious about the traceability, sustainability, and quality of the coffee they consume. we exist to promote traceable, sustainable, and quality coffee so that everyone in the coffee supply chain is empowered and given the value they deserve.')], size='200px'),put_button('Redeem Rewards', onclick=redeemPopup) ]},
-        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]},
-        {'title':'Coming Soon', 'content':[put_text('Coming Soon')]}
+        {'title': 'Rewards🎉','content':[ put_text('You can claim rewards in exchange for points here'),   put_tabs([
+        {'title':'Neighbor Coffee', 'content':[put_text('Neighbor coffee ☕').style('font-weight: bold'), put_row([put_image(img, height='150px'), put_text('NEIGHBOR COFFEE started as a roadside cafe in our Cagbang neighborhood, January of 2021. we offer manual brews and handcrafted espressos using specialty coffee beans that are both sourced locally and globally. we are a community of slow living and coffee-loving people who are conscious about the traceability, sustainability, and quality of the coffee they consume. we exist to promote traceable, sustainable, and quality coffee so that everyone in the coffee supply chain is empowered and given the value they deserve.')], size='200px'),put_button('Redeem Rewards', onclick=redeemPopup) ]},
+        {'title':'Coming Soon', 'content':[put_text('✨Coming Soon✨')]},
+        {'title':'Coming Soon', 'content':[put_text('✨Coming Soon✨')]}
     ])]},
-        {'title': 'Manual', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=False), color='success')},
-        {'title': 'Logout', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
+        {'title': 'Manual📖', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=False), color='success')},
+        {'title': 'Logout🚪', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
         
     ])    
 #=====diri gaprint qr code===========
@@ -511,7 +511,7 @@ def detectB():
 
         #focus score ni
         if datetime.datetime.now() >= endTime:
-          
+            global divisor
             playsound('./public/alarm.wav')
             blinkRate = blinkCounter/ divisor
             Fscore_i = blinkRate + drowsiness + distraction
@@ -526,15 +526,16 @@ def detectB():
         #====== focus level na part =====    
             global levelResult  
             if FsFinal_A > FsFinal_B:
-                FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+                FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  
             
                 levelResult =abs(float(round(FL,2)))
             else:
-                FL =  ((FsFinal_A- FsFinal_B)/FsFinal_A) * 100  #or algo purposes, wala gin sunod ang sa paper na formula ky same angud
+                FL =  ((FsFinal_A- FsFinal_B)/FsFinal_A) * 100  
             
                 levelResult =float(round(FL,2))
             
-           
+            global userPts #ilagay nalang sa DB
+            userPts = 0
             global currentXP
             currentXP = 0
             #XPtoLvlUp = 100 #muni baseline
@@ -545,6 +546,7 @@ def detectB():
                 toast('Yay! You levelled up!')
                 lvl +=1
                 userPts +=200
+                divisor +=5
                 #coll.insert_one(userPts) # Gchange to update, indi insert
                 #duration + datetime.timedelta(minutes=5) # add duration 
                 #print(lvl)
@@ -554,9 +556,9 @@ def detectB():
                     #print(currentXP)
                 
             
-            put_text('your focus level is:', levelResult)
-            put_text('current level:', lvl)
-            put_text('Xp:', currentXP )
+            put_text('your focus level is:', levelResult).style('text-align:center').style('font-weight:bold')
+            put_text('current level:', lvl).style('text-align:center').style('font-weight:bold')
+            put_text('Xp:', currentXP ).style('text-align:center').style('font-weight:bold')
             time.sleep(10)
             go_app('index', new_window=False)        
             break
