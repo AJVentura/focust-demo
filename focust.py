@@ -10,8 +10,7 @@ import pyqrcode
 from cvzone.FaceMeshModule import FaceMeshDetector
 from pymongo import MongoClient
 from pywebio.session import *
-from pywebio import *
-import time
+from pywebio import start_server
 from datetime import date, timedelta
 import random
 from flask import Flask
@@ -25,37 +24,53 @@ client = MongoClient("mongodb+srv://ashcbrd5:ashcbrd@focust.tl2e9ka.mongodb.net/
 db = client.Users
 coll = db.Credentials
 
-divisor = 10
+#divisor = 10
 
+#global userName
+global userPts
+global levelResult
+global lvl
+global currentXP
+global divisor
+levelResult = 0
+lvl = 1
+userPts = 0
+currentXP = 0
+divisor = 10
+duration = 600
 #=============LOGIN==================#
-def login():
+def index():
     info = input_group("Login",[
         input('Email', name='email', required=False),
         input('Password', name='password', type=PASSWORD, required=False),
     ],)
 
     #para ma access mo ang variables
-
+    global email
     email = info['email']
     password = info['password']
     
     
     user_found = coll.find_one({"email": email})  # query by specified username
+    
     if user_found:  # user exists
         if password == user_found['password']:
             toast('Login success!')
-            go_app('index', new_window=False)
+            go_app('dashboard', new_window=False)
         else:
             toast('Wrong password')
-            index()
+            
             
     else:
         toast("user not found")
-        index()
-    put_buttons(['Register'], [lambda: go_app('register', new_window=False)]) # Use  
+        
+        #put_buttons(['Register'], [lambda: go_app('register', new_window=False)]) # Use  
     
 #============REGISTER=============#
 def register():
+    
+    #globals
+    
     regex = '^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$'  
     def checkValid(x):
         if x['name'] == "" or x['email'] == "" or x['password'] =="":
@@ -85,6 +100,9 @@ def register():
     x = info #para sa checkValid() lang ra
     
     #para ma access mo ang variables
+    global userName
+    
+    
     userName = info['name']
     email = info['email']
     password = info['password']
@@ -92,21 +110,34 @@ def register():
     collection = {
             'name': userName,
             'email': email,
-            'password': password
+            'password': password,
+            'focus_level': levelResult,
+            'level': lvl,
+            'user_points': userPts,
+            'XP': currentXP,
+            'divisor': divisor,
+            'duration': duration
             }
 
     coll.insert_one(collection)
     toast("Registration Success")
     index() 
 
-#=============INDEX===============#
+#=============DASHBOARD===============#
 
-def index():
+def dashboard():
+    #coll.find({})
+    
     header()
-    name = 'a' #coll.find_one()
-    pts = '0' #focus_level.userPts
-
-    lvl = 'foo' #focus_level.lvl
+    #myquery = { "name": "aj" }
+    temp1 = coll.find_one({ "email": email }, {'_id':0, 'name':1})
+    str_name =  str(temp1).replace("{}", "")
+    temp2 = coll.find_one({ "email": email }, {'_id':0, 'user_points':1})
+    str_pts = str(temp2)
+    temp3 = coll.find_one({ "email": email }, {'_id':0, 'lvl':1})
+    str_lvl = str(temp3)
+    temp4 = coll.find_one({ "email": email }, {'_id':0, 'XP':1})
+    str_currentXP = str(temp4)
     session = "foo"
     img = open('public/neighbor.jpg', 'rb').read() 
     def redeemPopup():
@@ -122,7 +153,7 @@ def index():
             ])
     
     with use_scope():
-        put_text('Hi there!').style('font-size:50px').style('font-weight: bold')
+        put_text(str_name).style('font-size:50px').style('font-weight: bold')
 
     
     put_tabs([
@@ -130,7 +161,7 @@ def index():
         {'title': 'Dashboard📋','content':[put_tabs([
         
         {'title': 'Start Session', 'content': [ put_text('Press the button to start session'), put_button('Start', onclick=lambda: go_app('detect', new_window=False),  color='success') ]},
-        {'title': 'User Level', 'content': [ put_text('Level', lvl).style('font-weight: bold'),put_text('XP to next level: ', lvl ), put_text('Your points: ', pts ).style('font-weight: bold'),]},
+        {'title': 'User Level', 'content': [ put_text('Level', str_lvl).style('font-weight: bold'),put_text('XP to next level: ', str_currentXP ), put_text('Your points: ', str_pts ).style('font-weight: bold'),]},
         {'title': 'Recent Sessions', 'content':[put_collapse('Session 1',[session]),put_collapse('Session 1',[session]),put_collapse('Session 1',[session])]}
     ])]},
         
@@ -140,11 +171,13 @@ def index():
         {'title':'Coming Soon', 'content':[put_text('✨Coming Soon✨')]}
     ])]},
         {'title': 'Manual📖', 'content':put_button('Check Manual', onclick=lambda: go_app('manual', new_window=False), color='success')},
-        {'title': 'Logout🚪', 'content':put_button('Logout', onclick=lambda: logout(), color='danger')}
+        {'title': 'Logout🚪', 'content':put_button('Logout', onclick= lambda: go_app('index', new_window=False) , color='danger')}
         
     ])    
 #=====diri gaprint qr code===========
+    
     def createQR10():
+        #userPts = 100
         if  userPts >=100:
             userPts-100
             s = date.today() + timedelta(days=2) 
@@ -202,6 +235,10 @@ def index():
 
 def logout():
     toast("you have logged out")
+    go_app('login', new_window=False) 
+    
+    
+    
 
 def header():
     content = open('public/mainlogo.png', 'rb').read()
@@ -212,7 +249,7 @@ def detect():
     current_time = datetime.datetime.now()
     current_time_str = current_time.strftime('%H:%M')
     global duration
-    duration = datetime.timedelta(seconds=5)
+    duration = datetime.timedelta(seconds=10)
     endTime = datetime.datetime.now() + duration
     endTime_toStr = endTime.strftime('%H:%M')
   
@@ -318,7 +355,7 @@ def detect():
           focus_scoreA = {
                 'focus score A': FsFinal_A
                 }
-          coll.insert_one(focus_scoreA)
+          #coll.insert_one(focus_scoreA)
           time.sleep(5)
           go_app('stroop', new_window=False)
           break
@@ -522,9 +559,9 @@ def detectB():
             focus_scoreB = {
                     'focus score B': FsFinal_B
                     }
-            coll.insert_one(focus_scoreB)
+            #coll.insert_one(focus_scoreB)
         #====== focus level na part =====    
-            global levelResult  
+            #global levelResult  
             if FsFinal_A > FsFinal_B:
                 FL =  ((FsFinal_B - FsFinal_A)/FsFinal_A) * 100  
             
@@ -534,33 +571,46 @@ def detectB():
             
                 levelResult =float(round(FL,2))
             
-            global userPts #ilagay nalang sa DB
-            userPts = 0
-            global currentXP
-            currentXP = 0
+            #global userPts #ilagay nalang sa DB
+            #userPts = 0
+            #global currentXP
+            #currentXP = 0
             #XPtoLvlUp = 100 #muni baseline
-            global lvl
-            lvl=1
+            #global lvl
+            #lvl=1
             currentXP = levelResult + currentXP
+            global userPts
+            global lvl
             if currentXP >= 100:
                 toast('Yay! You levelled up!')
                 lvl +=1
                 userPts +=200
                 divisor +=5
+                
+                coll.update_many({{ "email": email },{"$set":{'focus_level': levelResult,   #feel ko sala malang ang pag syntax ko di
+                'level': lvl,
+                'user_points': userPts,
+                'XP': currentXP,
+                'divisor': divisor,
+                'duration': duration}}})
                 #coll.insert_one(userPts) # Gchange to update, indi insert
                 #duration + datetime.timedelta(minutes=5) # add duration 
                 #print(lvl)
                 #print("your points",userPts)
-                #else:
-                    #print('need more XP')
-                    #print(currentXP)
+            else:
+                coll.update_many({ "email": email },{"$set":{'focus_level': levelResult,
+                'level': lvl,
+                'user_points': userPts,
+                'XP': currentXP,
+                }})
+                   
                 
             
             put_text('your focus level is:', levelResult).style('text-align:center').style('font-weight:bold')
             put_text('current level:', lvl).style('text-align:center').style('font-weight:bold')
             put_text('Xp:', currentXP ).style('text-align:center').style('font-weight:bold')
             time.sleep(10)
-            go_app('index', new_window=False)        
+            go_app('dashboard', new_window=False)        
             break
       
 #========FOCUS LEVEL================= 
@@ -620,7 +670,7 @@ def manual():
     put_text('✅ Finished! \n you will receive XP based on how you did. Start multiple sessions for you to level up and earn Points!')
     put_button('Back', onclick=lambda: go_app("index", new_window=False), color='danger')
     
-
+#app.add_url_rule('/login', 'web_view', webio_view(login), methods=['GET', 'POST', 'OPTIONS'])
 app.add_url_rule('/focust', 'web_view', webio_view(index), methods=['GET', 'POST', 'OPTIONS'])
 
 if __name__ == '__main__':
@@ -628,5 +678,5 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', type=int, default=3000)
     args = parser.parse_args()
 
-start_server([login, index, detect, detectB, stroop, manual,], port=args.port)
+start_server([dashboard, register, index, detect, detectB, stroop, manual,], port=args.port)
 
